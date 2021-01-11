@@ -1,0 +1,5 @@
+{
+  "chromeWebSecurity": false,
+  "video": false,
+  "defaultCommandTimeout": 30000
+}

@@ -1,0 +1,18 @@
+version: "2.4"
+services:
+  lambda:
+    build: .
+    ports:
+      - "9000:8080"
+    volumes:
+      - ~/.aws-lambda-rie:/aws-lambda
+    entrypoint: /aws-lambda/aws-lambda-rie
+    command: /usr/local/bin/npx aws-lambda-ric index.handler
+    environment:
+      - CYPRESS_BULB_EMAIL
+      - CYPRESS_BULB_PASSWORD
+      - CYPRESS_TWITTER_CONSUMER_KEY
+      - CYPRESS_TWITTER_CONSUMER_SECRET
+      - CYPRESS_TWITTER_ACCESS_TOKEN_KEY
+      - CYPRESS_TWITTER_ACCESS_TOKEN_SECRET
+
