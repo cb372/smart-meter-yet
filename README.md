@@ -6,9 +6,7 @@ aren't any appointments available" message.
 
 ## How it works
 
-It runs Cypress in an AWS Lambda function on an hourly schedule.
-
-The Lambda artifact is a Docker image, based on the official Cypress image.
+It runs Cypress in a Fargate task on an hourly schedule.
 
 ## Environment variables
 
@@ -41,26 +39,10 @@ npm install
 npx cypress open
 ```
 
-## Running in Docker
-
-First install the AWS Lambda RIE (Runtime Interface Emulator) if you haven't already:
+## Deploying a new version
 
 ```
-mkdir -p ~/.aws-lambda-rie && \
-    curl -Lo ~/.aws-lambda-rie/aws-lambda-rie
-    https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie
-    && \
-        chmod +x ~/.aws-lambda-rie/aws-lambda-rie
-```
-
-Then build the image and start a container:
-
-```
-docker-compose up
-```
-
-Once the container is running, invoke the Lambda:
-
-```
-curl http://localhost:9000/2015-03-31/functions/function/invocations -d '{}'
+docker build . -t ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/smart-meter-yet:latest
+aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.eu-west-1.amazonaws.com/smart-meter-yet:latest
 ```

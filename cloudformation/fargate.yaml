@@ -1,0 +1,93 @@
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+  BulbEmail:
+    Type: String
+  BulbPassword:
+    Type: String
+    NoEcho: true
+  TwitterConsumerKey:
+    Type: String
+    NoEcho: true
+  TwitterConsumerSecret:
+    Type: String
+    NoEcho: true
+  TwitterAccessTokenKey:
+    Type: String
+    NoEcho: true
+  TwitterAccessTokenSecret:
+    Type: String
+    NoEcho: true
+
+Resources:
+
+  Cluster:
+    Type: AWS::ECS::Cluster
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'smart-meter-yet ECS task'
+      VpcId: !Ref VpcId
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: '/ecs/smart-meter-yet'
+      RetentionInDays: 14
+
+  TaskDef:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: smart-meter-yet
+      Cpu: 1024
+      Memory: 2048
+      ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ContainerDefinitions:
+        - Name: cypress
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.eu-west-1.amazonaws.com/smart-meter-yet:latest"
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: CYPRESS_BULB_EMAIL
+              Value: !Ref BulbEmail
+            - Name: CYPRESS_BULB_PASSWORD
+              Value: !Ref BulbPassword
+            - Name: CYPRESS_TWITTER_CONSUMER_KEY
+              Value: !Ref TwitterConsumerKey
+            - Name: CYPRESS_TWITTER_CONSUMER_SECRET
+              Value: !Ref TwitterConsumerSecret
+            - Name: CYPRESS_TWITTER_ACCESS_TOKEN_KEY
+              Value: !Ref TwitterAccessTokenKey
+            - Name: CYPRESS_TWITTER_ACCESS_TOKEN_SECRET
+              Value: !Ref TwitterAccessTokenSecret
+            - Name: NO_COLOR
+              Value: 1
+
+  ScheduledTaskRule:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: 'cron(0 * * * ? *)'
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt Cluster.Arn
+          RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole"
+          Id: smart-meter-yet-hourly
+          EcsParameters:
+            TaskDefinitionArn: !Ref TaskDef
+            LaunchType: FARGATE
+            NetworkConfiguration:
+              AwsVpcConfiguration:
+                SecurityGroups:
+                  - !Ref SecurityGroup
+                Subnets:
+                  - !Ref SubnetId

@@ -5,8 +5,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "aws-lambda-ric": "^1.0.0",
-    "cypress": "^6.2.0",
+    "cypress": "^6.2.1",
     "twitter-lite": "^0.14.0"
   }
 }
